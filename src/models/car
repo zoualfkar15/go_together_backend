@@ -1,0 +1,16 @@
+// models/car.js
+module.exports = (sequelize, DataTypes) => {
+  const Car = sequelize.define("Car", {
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+    userId: { type: DataTypes.INTEGER, allowNull: false },
+    model: { type: DataTypes.STRING, allowNull: false },
+    color: { type: DataTypes.STRING, allowNull: false },
+    plateNumber: { type: DataTypes.STRING, allowNull: false, unique: true },
+  });
+
+  Car.associate = (models) => {
+    Car.belongsTo(models.User, { foreignKey: "userId" });
+  };
+
+  return Car;
+};
