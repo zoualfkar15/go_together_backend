@@ -1,16 +1,16 @@
 const express = require("express");
 const router = express.Router();
 const bookingController = require("../controllers/bookingController");
-const { authenticate, authorize } = require("../middlewares/authMiddleware");
+const { authenticate, authorize } = require("../middleware/authMiddleware");
 
 // Passenger books a ride
-router.post("/book", authenticate, authorize(["passenger"]), bookingController.bookRide);
+//router.post("/book", authenticate, authorize(["passenger"]), bookingController.bookRide);
 
 // Passenger views bookings
 router.get("/my-bookings", authenticate, authorize(["passenger"]), bookingController.getMyBookings);
 
 // Driver views bookings for their rides
-router.get("/ride-bookings/:rideId", authenticate, authorize(["driver"]), bookingController.getRideBookings);
+//outer.get("/ride-bookings/:rideId", authenticate, authorize(["driver"]), bookingController.getRideBookings);
 
 // Admin can cancel any booking
 router.delete("/:id", authenticate, authorize(["admin"]), bookingController.cancelBooking);

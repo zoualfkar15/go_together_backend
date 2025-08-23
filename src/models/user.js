@@ -4,7 +4,7 @@ module.exports = (sequelize, DataTypes) => {
     id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
     name: { type: DataTypes.STRING, allowNull: false },
     phone: { type: DataTypes.STRING, allowNull: false, unique: true },
-    countrCode: { type: DataTypes.STRING, allowNull: false, unique: false },
+    countryCode: { type: DataTypes.STRING, allowNull: false, unique: false },
 
     password: { type: DataTypes.STRING, allowNull: false },
     role: {

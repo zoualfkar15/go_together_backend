@@ -12,12 +12,14 @@ module.exports = {
     signup: async (req, res) => {
         try {
             const { name, countryCode, phone, password, role } = req.body;
+            const profilePhoto = req.file ? req.file.filename : null;
 
+            console.log("Uploaded file:", req.file);
             if (role === 'admin') return res.status(400).json({ message: "You can't register with this role" });
             // Check if user already exists
             const existingUser = await User.findOne({ where: { phone, countryCode } });
             if (existingUser) {
-                return res.status(400).json({ message: "Email already registered" });
+                return res.status(400).json({ message: "Phone already registered" });
             }
 
             // Hash password
@@ -40,7 +42,8 @@ module.exports = {
                 password: hashedPassword,
                 role,
                 otpCode,
-                expiresAt
+                expiresAt,
+                profilePhoto // Save filename in DB
             });
 
 
@@ -51,6 +54,74 @@ module.exports = {
             res.status(500).json({ message: "Server error" });
         }
     },
+
+
+
+    // ----------------------------
+    // Send Code
+    // ----------------------------
+    sendCode: async (req, res) => {
+        try {
+            const { countryCode, phone } = req.body;
+
+            // Set OTP expiration time (5 minutes from now)
+            let expiresAt = new Date();
+            expiresAt.setMinutes(expiresAt.getMinutes() + 5);
+
+            // Generate OTP code (for demo, static; in production, random)
+            let otpCode = '123456';
+
+            // Find user by phone and countryCode
+            const user = await User.findOne({ where: { phone, countryCode } });
+
+            if (user) {
+                // Update OTP code and expiration
+                await user.update({ otpCode, expiresAt });
+                res.json({ message: "OTP code updated", user });
+            } else {
+                res.status(404).json({ message: "User not found" });
+            }
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ message: "Server error" });
+        }
+    },
+
+
+    // ----------------------------
+    // Verify OTP
+    // ----------------------------
+    verify: async (req, res) => {
+        try {
+            const { phone, countryCode, otpCode } = req.body;
+            const user = await User.findOne({ where: { phone, countryCode } });
+
+            if (!user) {
+                return res.status(404).json({ message: "User not found" });
+            }
+
+            if (user.otpCode !== otpCode) {
+                return res.status(400).json({ message: "Invalid OTP code" });
+            }
+
+            if (user.expiresAt < new Date()) {
+                return res.status(400).json({ message: "OTP code expired" });
+            }
+
+            // Optionally clear OTP after verification
+            await user.update({ otpCode: null, expiresAt: null, status: "active" });
+
+            res.json({ message: "OTP verified successfully", user });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ message: "Server error" });
+        }
+    },
+
+
+
+
+
 
     // ----------------------------
     // Login
@@ -173,4 +244,67 @@ module.exports = {
             res.status(500).json({ message: "Server error" });
         }
     },
+
+
+
+    // ----------------------------
+    // Change Password (logged-in user)
+    // ----------------------------
+    changePassword: async (req, res) => {
+        try {
+            const userId = req.user.id;
+            const { oldPassword, newPassword } = req.body;
+
+            const user = await User.findByPk(userId);
+            if (!user) {
+                return res.status(404).json({ message: "User not found" });
+            }
+
+            const validPassword = await bcrypt.compare(oldPassword, user.password);
+            if (!validPassword) {
+                return res.status(400).json({ message: "Old password is incorrect" });
+            }
+
+            const hashedPassword = await bcrypt.hash(newPassword, 10);
+            await user.update({ password: hashedPassword });
+
+            res.json({ message: "Password changed successfully" });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ message: "Server error" });
+        }
+    },
+
+
+    // ----------------------------
+    // Reset Password (using OTP)
+    // ----------------------------
+    resetPassword: async (req, res) => {
+        try {
+            const { phone, countryCode, otpCode, newPassword } = req.body;
+            const user = await User.findOne({ where: { phone, countryCode } });
+
+            if (!user) {
+                return res.status(404).json({ message: "User not found" });
+            }
+
+            if (user.otpCode !== otpCode) {
+                return res.status(400).json({ message: "Invalid OTP code" });
+            }
+
+            if (user.expiresAt < new Date()) {
+                return res.status(400).json({ message: "OTP code expired" });
+            }
+
+            const hashedPassword = await bcrypt.hash(newPassword, 10);
+            await user.update({ password: hashedPassword, otpCode: null, expiresAt: null });
+
+            res.json({ message: "Password reset successfully" });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ message: "Server error" });
+        }
+    },
+
+
 };

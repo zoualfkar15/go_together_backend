@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const carController = require("../controllers/carController");
-const { authenticate, authorize } = require("../middlewares/authMiddleware");
+const { authenticate, authorize } = require("../middleware/authMiddleware");
 
 // Driver adds their car
 router.post("/add", authenticate, authorize(["driver"]), carController.addCar);
