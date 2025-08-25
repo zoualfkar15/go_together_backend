@@ -1,6 +1,8 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const path = require('path');
+
 const db = require('./config/database');
 const userRoutes = require('./routes/userRoutes');
 const rideRoutes = require('./routes/rideRoutes');
@@ -9,6 +11,7 @@ const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+app.use("/uploads/", express.static(path.join(process.cwd(), "uploads")));
 
 // Middleware
 app.use(cors());

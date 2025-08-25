@@ -8,6 +8,7 @@ const { authenticate, authorize } = require("../middleware/authMiddleware");
 
 // Passenger views bookings
 router.get("/my-bookings", authenticate, authorize(["passenger"]), bookingController.getMyBookings);
+router.put("/updateStatus", authenticate, authorize(["driver",]), bookingController.updateBookingStatus);
 
 // Driver views bookings for their rides
 //outer.get("/ride-bookings/:rideId", authenticate, authorize(["driver"]), bookingController.getRideBookings);

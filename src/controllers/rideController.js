@@ -1,17 +1,19 @@
-const { Ride, User } = require("../models");
+const { Ride, User, Booking } = require("../models");
 
 module.exports = {
     createRide: async (req, res) => {
         try {
             const driverId = req.user.id;
-            const { from, to, dateTime, price, seatsAvailable } = req.body;
+            const { from, to, datetime, price, seats } = req.body;
+            console.log(datetime);
 
-            const ride = await Ride.create({ driverId, from, to, dateTime, price, seatsAvailable });
+            const ride = await Ride.create({ driverId, from, to, dateTime: datetime, price, seatsAvailable: seats, seats, status: "upcoming" });
             res.status(201).json({ message: "Ride created successfully", ride });
         } catch (error) {
             res.status(500).json({ message: "Server error" });
         }
     },
+
 
     getAllRides: async (req, res) => {
         try {
@@ -74,5 +76,39 @@ module.exports = {
         } catch (error) {
             res.status(500).json({ message: "Server error" });
         }
+    },
+
+    getMyRides: async (req, res) => {
+
+
+        // try {
+        const userId = req.user.id;
+        const userRole = req.user.role;
+
+        let rides;
+        if (userRole === "driver") {
+            // Driver: rides they created
+            rides = await Ride.findAll({
+                where: { driverId: userId },
+                include: [
+                    { model: User, }, // driver info
+                    { model: Booking, include: [{ model: User }] } // passengers
+                ]
+            });
+        } else if (userRole === "passenger") {
+
+            const bookings = await Booking.findAll({
+                where: { passengerId: userId },
+                include: [{ model: Ride, include: [{ model: User, attributes: ["id", "name", "phone", "verified"] }] }]
+            });
+            rides = bookings.map(b => b.Ride);
+        } else {
+            return res.status(403).json({ message: "Unauthorized" });
+        }
+
+        res.json(rides);
+        // } catch (error) {
+        //     res.status(500).json({ message: "Server error" });
+        // }
     }
 };

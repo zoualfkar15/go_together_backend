@@ -9,10 +9,10 @@ router.post("/create", authenticate, authorize(["driver"]), rideController.creat
 // Get all rides (any user)
 router.get("/", authenticate, rideController.getAllRides);
 
-// Driver's upcoming rides
-//router.get("/my-rides", authenticate, authorize(["driver"]), rideController.getMyRides);
+//  get my rides
+router.get("/my-rides", authenticate, authorize(["driver", "passenger"]), rideController.getMyRides);
 
 // Admin can delete any ride
-//router.delete("/:id", authenticate, authorize(["admin"]), rideController.delete);
+//router.delete("/:id", authenticate, authorize(["admin", "driver"]), rideController.delete);
 
 module.exports = router;

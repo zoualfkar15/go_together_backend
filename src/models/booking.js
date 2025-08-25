@@ -6,8 +6,8 @@ module.exports = (sequelize, DataTypes) => {
     passengerId: { type: DataTypes.INTEGER, allowNull: false },
     seatsBooked: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 1 },
     status: {
-      type: DataTypes.ENUM("confirmed", "canceled"),
-      defaultValue: "confirmed",
+      type: DataTypes.ENUM("pending", "confirmed", "canceled"),
+      defaultValue: "pending",
     },
   });
 

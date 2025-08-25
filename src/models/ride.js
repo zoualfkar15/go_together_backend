@@ -8,6 +8,8 @@ module.exports = (sequelize, DataTypes) => {
     dateTime: { type: DataTypes.DATE, allowNull: false },
     price: { type: DataTypes.FLOAT, allowNull: false },
     seatsAvailable: { type: DataTypes.INTEGER, allowNull: false },
+    seats: { type: DataTypes.INTEGER, allowNull: false },
+
     status: {
       type: DataTypes.ENUM("upcoming", "completed", "canceled"),
       defaultValue: "upcoming",

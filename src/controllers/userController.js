@@ -1,4 +1,4 @@
-const bcrypt = require("bcryptjs");
+const argon2 = require("argon2"); // Replace bcrypt import with argon2
 const jwt = require("jsonwebtoken");
 const { User, Car } = require("../models");
 
@@ -23,7 +23,7 @@ module.exports = {
             }
 
             // Hash password
-            const hashedPassword = await bcrypt.hash(password, 10);
+            const hashedPassword = await argon2.hash(password); // Use argon2 to hash password
 
 
             // Set OTP expiration time (5 minutes from now)
@@ -111,7 +111,15 @@ module.exports = {
             // Optionally clear OTP after verification
             await user.update({ otpCode: null, expiresAt: null, status: "active" });
 
-            res.json({ message: "OTP verified successfully", user });
+            // Generate JWT
+            const token = jwt.sign(
+                { id: user.id, role: user.role },
+                JWT_SECRET,
+                { expiresIn: "7d" }
+            );
+
+
+            res.json({ message: "OTP verified successfully", token, user });
         } catch (error) {
             console.error(error);
             res.status(500).json({ message: "Server error" });
@@ -128,14 +136,14 @@ module.exports = {
     // ----------------------------
     login: async (req, res) => {
         try {
-            const { email, password } = req.body;
+            const { phone, countryCode, password } = req.body;
 
-            const user = await User.findOne({ where: { email } });
+            const user = await User.findOne({ where: { phone, countryCode } });
             if (!user) {
                 return res.status(404).json({ message: "User not found" });
             }
 
-            const validPassword = await bcrypt.compare(password, user.password);
+            const validPassword = await argon2.verify(user.password, password); // Use argon2 for password check
             if (!validPassword) {
                 return res.status(401).json({ message: "Invalid password" });
             }
@@ -260,12 +268,12 @@ module.exports = {
                 return res.status(404).json({ message: "User not found" });
             }
 
-            const validPassword = await bcrypt.compare(oldPassword, user.password);
+            const validPassword = await argon2.verify(user.password, oldPassword); // Use argon2 to verify old password
             if (!validPassword) {
                 return res.status(400).json({ message: "Old password is incorrect" });
             }
 
-            const hashedPassword = await bcrypt.hash(newPassword, 10);
+            const hashedPassword = await argon2.hash(newPassword); // Use argon2 to hash new password
             await user.update({ password: hashedPassword });
 
             res.json({ message: "Password changed successfully" });
@@ -296,7 +304,7 @@ module.exports = {
                 return res.status(400).json({ message: "OTP code expired" });
             }
 
-            const hashedPassword = await bcrypt.hash(newPassword, 10);
+            const hashedPassword = await argon2.hash(newPassword); // Use argon2 to hash new password
             await user.update({ password: hashedPassword, otpCode: null, expiresAt: null });
 
             res.json({ message: "Password reset successfully" });

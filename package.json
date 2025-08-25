@@ -8,6 +8,7 @@
     "dev": "nodemon src/app.js"
   },
   "dependencies": {
+    "argon2": "^0.44.0",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^3.0.2",
     "cluster": "^0.7.7",

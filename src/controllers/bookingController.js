@@ -26,6 +26,62 @@ module.exports = {
         }
     },
 
+
+    updateBookingStatus: async (req, res) => {
+        try {
+            const driverId = req.user.id; // driver who owns the ride
+            const { bookingId, status } = req.body; // status = "accepted" | "rejected"
+
+            if (!["confirmed", "canceled"].includes(status)) {
+                return res.status(400).json({ message: "Invalid status" });
+            }
+
+            // find booking
+            const booking = await Booking.findByPk(bookingId);
+            if (!booking) {
+                return res.status(404).json({ message: "Booking not found" });
+            }
+
+            // find ride
+            const ride = await Ride.findByPk(booking.rideId);
+            if (!ride || ride.driverId !== driverId) {
+                return res.status(403).json({ message: "Not authorized to update this booking" });
+            }
+
+            // check if already processed
+            if (booking.status !== "pending") {
+                return res.status(400).json({ message: "Booking already processed" });
+            }
+
+
+
+            // if accepted → reduce seats
+            if (status === "confirmed") {
+                if (ride.seatsAvailable < booking.seatsBooked) {
+                    return res.status(400).json({ message: "Not enough seats anymore" });
+                }
+
+                // update booking status
+                await booking.update({ status });
+
+                await ride.update({
+                    seatsAvailable: ride.seatsAvailable - booking.seatsBooked
+                });
+            } else if (status === "canceled") {
+
+                // update booking status
+                await booking.update({ status });
+            }
+
+            return res.status(200).json({ message: `Booking ${status}`, booking });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ message: "Server error" });
+        }
+    },
+
+
+
     getMyBookings: async (req, res) => {
         try {
             const passengerId = req.user.id;
