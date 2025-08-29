@@ -4,10 +4,10 @@ const adminController = require("../controllers/adminController");
 const { authenticate, authorize } = require("../middleware/authMiddleware");
 
 // Admin dashboard stats
-//router.get("/dashboard", authenticate, authorize(["admin"]), adminController.getDashboardStats);
+router.get("/dashboard", authenticate, authorize(["admin"]), adminController.dashboard);
 
 // Manage all users
 router.get("/users", authenticate, authorize(["admin"]), adminController.getAllUsers);
-//outer.put("/users/:id/block", authenticate, authorize(["admin"]), adminController.blockUser);
-
+router.get("/rides", authenticate, authorize(["admin"]), adminController.getAllRides);
+router.post("/blockUser", authenticate, authorize(["admin"]), adminController.blockUser);
 module.exports = router;

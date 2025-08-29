@@ -14,7 +14,6 @@ module.exports = {
             const { name, countryCode, phone, password, role } = req.body;
             const profilePhoto = req.file ? req.file.filename : null;
 
-            console.log("Uploaded file:", req.file);
             if (role === 'admin') return res.status(400).json({ message: "You can't register with this role" });
             // Check if user already exists
             const existingUser = await User.findOne({ where: { phone, countryCode } });
@@ -57,6 +56,7 @@ module.exports = {
 
 
 
+
     // ----------------------------
     // Send Code
     // ----------------------------
@@ -77,7 +77,7 @@ module.exports = {
             if (user) {
                 // Update OTP code and expiration
                 await user.update({ otpCode, expiresAt });
-                res.json({ message: "OTP code updated", user });
+                res.json({ message: "OTP sent successfully", user });
             } else {
                 res.status(404).json({ message: "User not found" });
             }
@@ -94,7 +94,10 @@ module.exports = {
     verify: async (req, res) => {
         try {
             const { phone, countryCode, otpCode } = req.body;
-            const user = await User.findOne({ where: { phone, countryCode } });
+            const user = await User.findOne({
+                where: { phone, countryCode },
+                include: [{ model: Car }],
+            });
 
             if (!user) {
                 return res.status(404).json({ message: "User not found" });
@@ -111,7 +114,7 @@ module.exports = {
             // Optionally clear OTP after verification
             await user.update({ otpCode: null, expiresAt: null, status: "active" });
 
-            // Generate JWT
+            // Generate JWT Token
             const token = jwt.sign(
                 { id: user.id, role: user.role },
                 JWT_SECRET,
@@ -138,9 +141,17 @@ module.exports = {
         try {
             const { phone, countryCode, password } = req.body;
 
-            const user = await User.findOne({ where: { phone, countryCode } });
+            const user = await User.findOne({
+                where: { phone, countryCode },
+                include: [{ model: Car }],
+            });
             if (!user) {
                 return res.status(404).json({ message: "User not found" });
+            }
+
+            if (user.status === 'blocked') {
+                return res.status(401).json({ message: "User Blocked" });
+
             }
 
             const validPassword = await argon2.verify(user.password, password); // Use argon2 for password check
@@ -197,7 +208,14 @@ module.exports = {
                 return res.status(404).json({ message: "User not found" });
             }
 
-            await user.update({ name, phone, profilePhoto });
+            // Build dynamic update object
+            const updates = {};
+            if (name !== null && name !== undefined) updates.name = name;
+            if (phone !== null && phone !== undefined) updates.phone = phone;
+            if (profilePhoto !== null && profilePhoto !== undefined) updates.profilePhoto = profilePhoto;
+
+            // Only update provided fields
+            await user.update(updates);
 
             res.json({ message: "Profile updated successfully", user });
         } catch (error) {
@@ -205,6 +223,7 @@ module.exports = {
             res.status(500).json({ message: "Server error" });
         }
     },
+
 
     // ----------------------------
     // Admin: Verify Driver

@@ -1,7 +1,7 @@
 const { Booking, Ride, User } = require("../models");
 
 module.exports = {
-    createBooking: async (req, res) => {
+    bookRide: async (req, res) => {
         try {
             const passengerId = req.user.id;
             const { rideId, seatsBooked } = req.body;
@@ -9,6 +9,15 @@ module.exports = {
             const ride = await Ride.findByPk(rideId);
             if (!ride || ride.status !== "upcoming") {
                 return res.status(404).json({ message: "Ride not available" });
+            }
+
+            // 2. Check if passenger already booked this ride
+            const existingBooking = await Booking.findOne({
+                where: { rideId, passengerId }
+            });
+
+            if (existingBooking) {
+                return res.status(400).json({ message: "You already booked this ride" });
             }
 
             if (ride.seatsAvailable < seatsBooked) {

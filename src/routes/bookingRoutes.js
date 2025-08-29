@@ -4,7 +4,7 @@ const bookingController = require("../controllers/bookingController");
 const { authenticate, authorize } = require("../middleware/authMiddleware");
 
 // Passenger books a ride
-//router.post("/book", authenticate, authorize(["passenger"]), bookingController.bookRide);
+router.post("/book", authenticate, authorize(["passenger"]), bookingController.bookRide);
 
 // Passenger views bookings
 router.get("/my-bookings", authenticate, authorize(["passenger"]), bookingController.getMyBookings);

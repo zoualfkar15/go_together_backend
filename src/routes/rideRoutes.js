@@ -7,10 +7,12 @@ const { authenticate, authorize } = require("../middleware/authMiddleware");
 router.post("/create", authenticate, authorize(["driver"]), rideController.createRide);
 
 // Get all rides (any user)
-router.get("/", authenticate, rideController.getAllRides);
+router.get("/allRides", authenticate, rideController.getAllRides);
 
 //  get my rides
 router.get("/my-rides", authenticate, authorize(["driver", "passenger"]), rideController.getMyRides);
+
+router.post("/updateStatus", authenticate, authorize(["driver"]), rideController.updateRideStatus);
 
 // Admin can delete any ride
 //router.delete("/:id", authenticate, authorize(["admin", "driver"]), rideController.delete);
